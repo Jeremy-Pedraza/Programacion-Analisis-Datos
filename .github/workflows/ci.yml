@@ -1,0 +1,74 @@
+# Integración continua: se ejecuta en cada push y en cada pull request.
+# Un PR solo puede fusionarse si este workflow termina en verde (regla de protección de rama).
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "fix/**", "release/**"]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check . --output-format=github
+
+  test:
+    name: Pruebas (Python ${{ matrix.python-version }})
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Ejecutar pruebas con cobertura
+        run: pytest --cov --cov-report=term --cov-report=xml --cov-fail-under=85 --junitxml=reporte-pruebas.xml
+      - name: Publicar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            reporte-pruebas.xml
+
+  scrapy:
+    name: Araña Scrapy (snapshot)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt scrapy && pip install -e .
+      - name: Ejecutar araña contra el snapshot versionado
+        run: |
+          mkdir -p out
+          scrapy runspider spiders/competencia_spider.py -a start_url="file://$PWD/data/ml_resultados.html"
+          python -c "import json; n=len(json.load(open('out/competencia_scrapy.json'))); print(n, 'artículos'); assert n >= 10"
