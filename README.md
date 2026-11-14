@@ -35,6 +35,7 @@ Programacion-Analisis-Datos/
 │   ├── workflows/cd.yml          # pruebas → pipeline → GitHub Pages → prueba de humo
 │   └── pull_request_template.md
 ├── data/                         # snapshot HTML versionado (reproducibilidad)
+├── docs/informe/                 # informe EA2 (PDF/DOCX), figuras y scripts que lo generan
 ├── notebooks/                    # cuaderno Jupyter de la EA2
 ├── spiders/competencia_spider.py # araña Scrapy (reutiliza ml_scraper.competencia)
 ├── src/ml_scraper/               # paquete Python
