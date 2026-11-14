@@ -15,3 +15,7 @@ htmlcov/
 out/
 site/
 desktop.ini
+
+# material del curso (no se versiona)
+rubrica.txt
+~$*

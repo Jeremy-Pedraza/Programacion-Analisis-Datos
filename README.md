@@ -1,7 +1,7 @@
-# scraping-ml-devops
+# Programacion-Analisis-Datos
 
-[![CI](https://github.com/USUARIO/scraping-ml-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/USUARIO/scraping-ml-devops/actions/workflows/ci.yml)
-[![CD](https://github.com/USUARIO/scraping-ml-devops/actions/workflows/cd.yml/badge.svg)](https://github.com/USUARIO/scraping-ml-devops/actions/workflows/cd.yml)
+[![CI](https://github.com/Jeremy-Pedraza/Programacion-Analisis-Datos/actions/workflows/ci.yml/badge.svg)](https://github.com/Jeremy-Pedraza/Programacion-Analisis-Datos/actions/workflows/ci.yml)
+[![CD](https://github.com/Jeremy-Pedraza/Programacion-Analisis-Datos/actions/workflows/cd.yml/badge.svg)](https://github.com/Jeremy-Pedraza/Programacion-Analisis-Datos/actions/workflows/cd.yml)
 
 Análisis competitivo del **Samsung Galaxy A55 5G 256 GB** en **Mercado Libre Colombia** mediante
 *web scraping* (BeautifulSoup, Selenium y Scrapy), convertido en un proyecto de software
@@ -12,7 +12,7 @@ versionado con **Git/GitHub** y un flujo **DevOps** de integración y despliegue
 > Programación para Análisis de Datos · Institución Universitaria Digital de Antioquia
 > Continuación de la EA1 (*Análisis y herramientas de extracción de datos*).
 
-**Reporte desplegado:** https://USUARIO.github.io/scraping-ml-devops/
+**Reporte desplegado:** https://jeremy-pedraza.github.io/Programacion-Analisis-Datos/
 
 ---
 
@@ -29,12 +29,13 @@ versionado con **Git/GitHub** y un flujo **DevOps** de integración y despliegue
 ## 2. Estructura
 
 ```
-scraping-ml-devops/
+Programacion-Analisis-Datos/
 ├── .github/
 │   ├── workflows/ci.yml          # lint + pruebas (matriz 3.10–3.12) + araña Scrapy
 │   ├── workflows/cd.yml          # pruebas → pipeline → GitHub Pages → prueba de humo
 │   └── pull_request_template.md
 ├── data/                         # snapshot HTML versionado (reproducibilidad)
+├── docs/informe/                 # informe EA2 (PDF/DOCX), figuras y scripts que lo generan
 ├── notebooks/                    # cuaderno Jupyter de la EA2
 ├── spiders/competencia_spider.py # araña Scrapy (reutiliza ml_scraper.competencia)
 ├── src/ml_scraper/               # paquete Python
