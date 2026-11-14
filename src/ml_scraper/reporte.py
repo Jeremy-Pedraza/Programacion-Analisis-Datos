@@ -77,7 +77,7 @@ CSS = """
 --muted:#9ca3af;--accent:#7fb0e0;--hl:#f2697f;--line:#2a3441}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
 font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{background:var(--accent);color:#fff;padding:28px 16px}
+header{background:#1b3a5c;color:#fff;padding:28px 16px}
 header h1{margin:0 0 4px;font-size:1.5rem}header p{margin:0;opacity:.85}
 main{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:8px 0 20px}
