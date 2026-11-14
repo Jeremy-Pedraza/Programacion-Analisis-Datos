@@ -1,0 +1,77 @@
+# Despliegue continuo: cada fusión en main vuelve a probar, ejecuta el pipeline de scraping
+# y publica el reporte resultante en GitHub Pages.
+# Requisito único: Settings → Pages → Source = "GitHub Actions".
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      en_vivo:
+        description: "Ejecutar el scraping contra el sitio real (en lugar del snapshot)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Probar y construir el reporte
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Pruebas (puerta de calidad antes de desplegar)
+        run: pytest -q --cov --cov-fail-under=85
+      - name: Ejecutar pipeline de scraping
+        run: python -m ml_scraper --site site ${{ inputs.en_vivo && '--en-vivo' || '' }}
+      - name: Guardar datos extraídos
+        uses: actions/upload-artifact@v4
+        with:
+          name: datos-extraidos
+          path: out/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Desplegar en GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Prueba de humo del despliegue
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar que el sitio responde y contiene el reporte
+        run: |
+          URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          for i in 1 2 3 4 5; do
+            if curl -fsSL "$URL" | grep -q "Galaxy A55"; then echo "OK: $URL"; exit 0; fi
+            sleep 15
+          done
+          echo "El sitio no respondió correctamente: $URL"; exit 1
