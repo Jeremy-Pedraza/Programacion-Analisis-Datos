@@ -15,7 +15,8 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 
 BASE = Path(__file__).resolve().parent
-PLANTILLA = BASE.parents[2] / "EV1" / "Pedraza_Jeremy_Analizando_EA1.docx"  # plantilla institucional (fuera del repo)
+import os
+PLANTILLA = Path(os.environ.get("EA1_PLANTILLA", BASE.parents[2] / "EV1" / "Pedraza_Jeremy_Analizando_EA1.docx"))
 SALIDA = BASE / "Pedraza_Jeremy_Optimizando_EA2.docx"
 FIG = BASE / "figuras"
 GH = sys.argv[1] if len(sys.argv) > 1 else "Jeremy-Pedraza"
@@ -351,13 +352,13 @@ H2("Métricas de éxito")
 P("La solución se considera exitosa si cumple los criterios verificables de la Tabla 2.")
 rotulo("Tabla", "Métricas de éxito definidas para la solución")
 tabla(["Métrica", "Criterio de aceptación", "Resultado"], [
-    ["Uso de ramas", "≥ 1 rama por funcionalidad, fusionadas con --no-ff", "7 ramas de trabajo, 7 fusiones (cumple)"],
-    ["Commits descriptivos", "100 % con Conventional Commits", "18/18 (cumple)"],
-    ["Pull requests", "Integración a develop y a main mediante PR", "PR #1 y PR #2 (cumple)"],
+    ["Uso de ramas", "≥ 1 rama por funcionalidad, fusionadas con --no-ff", "7 ramas de trabajo, 9 fusiones (cumple)"],
+    ["Commits descriptivos", "100 % con Conventional Commits", "20/20 (cumple)"],
+    ["Pull requests", "Integración a develop y a main mediante PR", "PR #1 y PR #2 fusionados (cumple)"],
     ["Pruebas automatizadas", "≥ 20 pruebas, 0 fallos", "30 pruebas, 0 fallos (cumple)"],
     ["Cobertura", "≥ 85 % del paquete", "93 % (cumple)"],
     ["Integración continua", "CI en cada push y PR, matriz ≥ 3 versiones", "Python 3.10–3.12 (cumple)"],
-    ["Despliegue", "Publicación automática y prueba de humo", "GitHub Pages + smoke test (cumple)"],
+    ["Despliegue", "Publicación automática y prueba de humo", "GitHub Pages, smoke test en verde (cumple)"],
     ["Regresión de negocio", "Mantener la conclusión de la EA1", "+17,05 % vs. promedio (cumple)"],
 ], [1.1, 1.6, 1.3])
 
@@ -473,7 +474,7 @@ tabla(["Rama", "Propósito", "Commits"], [
     ["feature/ci-github-actions", "Workflow de CI, plantilla de PR y guía de contribución", "2"],
     ["feature/cd-github-pages", "Workflow de CD y README", "2"],
     ["fix/contraste-encabezado", "Corrección de contraste del reporte en modo oscuro", "1"],
-    ["docs/notebook-ea2", "Cuaderno de la EA2, cobertura, CHANGELOG y URLs (PR #1)", "4"],
+    ["docs/notebook-ea2", "Cuaderno, cobertura, CHANGELOG, URLs, CI e informe (PR #1)", "6"],
 ], [1.6, 2.4, 0.6])
 H2("Convención de commits")
 P("Los mensajes siguen la especificación *Conventional Commits* (Conventional Commits, 2019): "
@@ -509,16 +510,17 @@ codigo('''
 H2("Pull requests y protección de ramas")
 P("Los *pull requests* son el punto en el que el trabajo de una rama se propone, se revisa y se "
   "integra (GitHub, s. f.-b). Cada PR utiliza la plantilla `.github/pull_request_template.md`, que "
-  "exige describir el cambio, clasificarlo y confirmar que las pruebas y el *lint* pasan. Sobre "
-  "`main` y `develop` se configuraron reglas de protección: no se admiten *push* directos, la "
-  "fusión exige un PR y los *checks* de CI (`Lint (ruff)`, `Pruebas (Python 3.10/3.11/3.12)` y "
-  "`Araña Scrapy`) deben estar en verde. Se gestionaron dos PR:")
+  "exige describir el cambio, clasificarlo y confirmar que las pruebas y el *lint* pasan. La guía "
+  "`CONTRIBUTING.md` establece como política que `main` y `develop` solo reciben cambios mediante "
+  "PR y que los *checks* de CI (`Lint (ruff)`, `Pruebas (Python 3.10/3.11/3.12)` y `Araña "
+  "Scrapy`) deben estar en verde antes de fusionar. Se gestionaron dos PR:")
 lista([
     "**PR #1 — `docs/notebook-ea2` → `develop`:** incorpora el cuaderno de la EA2, la configuración "
-    "de cobertura y el CHANGELOG. Su apertura dispara el workflow de CI sobre el resultado de la "
-    "fusión antes de aprobarlo.",
+    "de cobertura, el CHANGELOG y el informe. Su apertura disparó el workflow de CI sobre el "
+    "resultado de la fusión, y se fusionó con *Create a merge commit* cuando quedó en verde.",
     "**PR #2 — `develop` → `main` (release v1.0.0):** promueve la versión a producción. Al "
-    "fusionarlo se ejecuta el workflow de CD y se crea la etiqueta `v1.0.0`.",
+    "fusionarlo se ejecutó el workflow de CD y se creó la etiqueta anotada `v1.0.0` sobre el "
+    "*commit* de fusión.",
 ])
 H2("Pruebas automatizadas")
 P("Las pruebas son la condición que hace seguro el despliegue continuo: sin ellas, publicar en "
@@ -585,8 +587,9 @@ codigo('''
 
 H1("Resultados")
 H2("Control de versiones")
-P("El repositorio registra 18 *commits* de trabajo y 7 fusiones sin avance rápido distribuidos en "
-  "siete ramas, además de los dos *pull requests* de integración y liberación. El 100 % de los "
+P("El repositorio registra 20 *commits* de trabajo y 9 fusiones sin avance rápido distribuidos en "
+  "siete ramas de trabajo, incluidas las fusiones de los dos *pull requests* de integración y "
+  "liberación. El 100 % de los "
   "mensajes cumple la convención *Conventional Commits*, y cada *commit* intermedio de las ramas "
   "`feature/*` se verificó con la batería de pruebas antes de fusionarse, de modo que cualquier "
   "punto del historial es ejecutable.")
@@ -607,10 +610,16 @@ P(f"Cada fusión en `main` publica el reporte en **{PAGES}**. La página present
   "clave, la visualización, la tabla de competidores, la ficha, las opiniones, las métricas de "
   "éxito y los datos descargables en CSV, e indica en el pie el número de *build* y el *commit* que "
   "la generó, lo que vincula cada versión publicada con su origen exacto en el historial (Figura 3).")
+P("El primer despliegue evidenció el valor de la prueba de humo. La ejecución de CD posterior al "
+  "PR #2 construyó y publicó el sitio, pero el trabajo **smoke** falló: la URL respondía 404. El "
+  "diagnóstico mostró que la cuenta tenía configurado un dominio personalizado heredado del sitio "
+  "de usuario (`jeremy-pedraza.github.io`), que redirigía todos los proyectos a un servidor externo "
+  "sin el reporte. Tras retirar esa configuración se relanzó el workflow manualmente y la ejecución "
+  "#2 completó los tres trabajos en verde. Sin la prueba de humo, el pipeline habría reportado éxito "
+  "con un sitio inaccesible.")
 rotulo("Figura", "Reporte generado por el pipeline y publicado en GitHub Pages")
 figura(FIG / "sitio_reporte.png", 14)
-nota("Captura del `index.html` generado por `python -m ml_scraper`, idéntico al que publica el "
-     "workflow de CD.")
+nota(f"Captura del sitio publicado en {PAGES} (ejecución #2 de CD, *commit* `5a0bfc3`).")
 H2("Resultados del análisis")
 P("La prueba de regresión garantiza que la reingeniería no alteró los hallazgos de la EA1, que el "
   "pipeline reproduce de forma idéntica en cada despliegue (Tabla 7 y Figura 4).")
