@@ -29,6 +29,7 @@ addopts = "-ra"
 
 [tool.coverage.run]
 source = ["ml_scraper"]
+omit = ["*/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
