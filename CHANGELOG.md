@@ -2,6 +2,25 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [2.0.0] - 2026-11-25
+
+### Añadido
+- **Aplicación web (FastAPI)** `ml_scraper.web`: tablero HTML en `/` y API REST (`/health`,
+  `/api/indicadores`, `/api/producto`, `/api/competencia`, `/api/metricas`, `/docs`). Configurable
+  por variables de entorno (`APP_TITLE`, `APP_ENV`, `APP_DATA_MODE`, `PORT`, `APP_WORK_DIR`).
+- **Contenedor Docker** (`Dockerfile`, `.dockerignore`) con usuario sin privilegios y lectura del
+  puerto desde `$PORT`.
+- **Despliegue en la nube (Render)** definido como código en `render.yaml` (*health check* `/health`,
+  `autoDeploy: false`).
+- Workflow **CD · Render** (`cd-render.yml`): pruebas → build y verificación de la imagen Docker →
+  disparo del *Deploy Hook* de Render → prueba de humo contra `/health` en producción.
+- 7 pruebas nuevas de la API web con `TestClient` (total: 37).
+- Guía de despliegue `docs/DESPLIEGUE.md` e informe y cuaderno de la EA3.
+
+### Cambiado
+- Dependencias de ejecución: `fastapi`, `uvicorn[standard]`; de desarrollo: `httpx`.
+- README reorganizado con secciones de instalación, uso, automatización y despliegue.
+
 ## [1.0.0] - 2026-11-14
 
 ### Añadido
