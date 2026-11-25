@@ -1,0 +1,99 @@
+# Despliegue continuo de la APLICACIÓN WEB (FastAPI) en Render.
+#
+# A diferencia de cd.yml (reporte estático en GitHub Pages), este workflow publica el servicio
+# en un proveedor de alojamiento en la nube. GitHub Actions es el único origen de los despliegues:
+#   1. test        — puerta de calidad: vuelve a ejecutar las pruebas.
+#   2. docker      — valida que la imagen del contenedor se construye.
+#   3. deploy      — dispara el despliegue en Render mediante su Deploy Hook (secreto).
+#   4. smoke       — prueba de humo contra la URL pública (endpoint /health).
+#
+# Configuración única (una sola vez, en Settings del repositorio):
+#   - Secret  RENDER_DEPLOY_HOOK_URL  → URL del Deploy Hook del servicio en Render.
+#   - Variable RENDER_SERVICE_URL     → URL pública del servicio (p. ej. https://galaxy-a55-analytics.onrender.com).
+# Mientras no estén configurados, el workflow termina en verde omitiendo el despliegue.
+name: CD · Render
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: render-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Pruebas (puerta de calidad)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Ejecutar pruebas con cobertura
+        run: pytest -q --cov --cov-fail-under=85
+
+  docker:
+    name: Construir imagen del contenedor
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir la imagen (sin publicar)
+        run: docker build -t ml-scraper-web:${{ github.sha }} .
+      - name: Verificar que el contenedor arranca y responde /health
+        run: |
+          docker run -d --name app -p 8000:8000 ml-scraper-web:${{ github.sha }}
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS http://localhost:8000/health | grep -q '"status":"ok"'; then
+              echo "Contenedor saludable"; docker logs app; exit 0
+            fi
+            sleep 3
+          done
+          echo "El contenedor no respondió /health"; docker logs app; exit 1
+
+  deploy:
+    name: Desplegar en Render
+    needs: docker
+    runs-on: ubuntu-latest
+    environment:
+      name: render
+      url: ${{ vars.RENDER_SERVICE_URL }}
+    steps:
+      - name: Disparar el Deploy Hook de Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_URL no configurado — se omite el despliegue."
+            echo "Configure el secreto para activar el despliegue automático en Render."
+            exit 0
+          fi
+          echo "Disparando despliegue en Render…"
+          codigo=$(curl -fsS -w '%{http_code}' -o /dev/null "$HOOK")
+          echo "Render respondió HTTP $codigo"
+
+  smoke:
+    name: Prueba de humo del despliegue
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: vars.RENDER_SERVICE_URL != ''
+    steps:
+      - name: Esperar y verificar /health en producción
+        run: |
+          URL="${{ vars.RENDER_SERVICE_URL }}/health"
+          echo "Verificando $URL (hasta ~5 min mientras Render reconstruye)…"
+          for i in $(seq 1 20); do
+            if curl -fsS "$URL" | grep -q '"status":"ok"'; then
+              echo "OK: el servicio responde en $URL"; exit 0
+            fi
+            echo "Intento $i: aún no responde; esperando 15 s…"; sleep 15
+          done
+          echo "El servicio no respondió correctamente en $URL"; exit 1
