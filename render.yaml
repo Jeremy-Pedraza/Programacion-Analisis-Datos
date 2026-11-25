@@ -1,0 +1,24 @@
+# Infraestructura como código para Render (Blueprint).
+# Define el servicio web a partir del Dockerfile. El despliegue NO es automático por push:
+# lo dispara el workflow de GitHub Actions (cd-render.yml) tras pasar las pruebas, de modo que
+# GitHub Actions es el único origen de los despliegues (integración y despliegue continuos).
+# Documentación: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: galaxy-a55-analytics
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    branch: main
+    autoDeploy: false            # el despliegue lo dispara GitHub Actions, no cada push
+    healthCheckPath: /health     # Render marca el servicio "vivo" cuando /health responde 200
+    envVars:
+      - key: APP_TITLE
+        value: "Análisis competitivo — Samsung Galaxy A55 5G 256 GB"
+      - key: APP_ENV
+        value: production
+      - key: APP_DATA_MODE
+        value: snapshot          # usa el snapshot versionado; "en-vivo" haría peticiones reales
+      - key: PYTHON_VERSION
+        value: "3.12"
